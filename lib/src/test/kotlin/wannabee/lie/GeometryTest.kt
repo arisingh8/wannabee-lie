@@ -6,9 +6,11 @@ package wannabee.lie
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class LibraryTest {
+class GeometryTest {
+    /*
     @Test fun someLibraryMethodReturnsTrue() {
         val classUnderTest = Library()
         assertTrue(classUnderTest.someLibraryMethod(), "someLibraryMethod should return 'true'")
     }
+     */
 }
