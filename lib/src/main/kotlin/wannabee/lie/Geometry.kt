@@ -14,9 +14,15 @@ private fun skew(scalar: Double = 1.0) = DMatrix2x2(
     scalar, 0.0
 )
 
-private fun Double.equalsDelta(other: Double) = abs(this - other) < 0.0000000001
+fun Double.equalsDelta(other: Double) = abs(this - other) < 0.0000000001
+fun DMatrix2.equalsDelta(other: DMatrix2) = this.a1.equalsDelta(other.a1) && this.a2.equalsDelta(other.a2)
 
-class LieRotation2d(val rotMatrix: DMatrix2x2) {
+class LieRotation2d(
+    val rotMatrix: DMatrix2x2 = DMatrix2x2(
+        1.0, 0.0,
+        0.0, 1.0
+    )
+) {
     companion object {
         @JvmStatic
         fun exp(heading: Double): LieRotation2d {
@@ -33,12 +39,12 @@ class LieRotation2d(val rotMatrix: DMatrix2x2) {
         CommonOps_DDF2.transpose(rotMatrix, tmp)
         return LieRotation2d(tmp)
     }
-    fun compose(other: LieRotation2d): LieRotation2d {
+    operator fun times(other: LieRotation2d): LieRotation2d {
         val tmp = DMatrix2x2()
         CommonOps_DDF2.mult(rotMatrix, other.rotMatrix, tmp)
         return LieRotation2d(tmp)
     }
-    fun compose(other: DMatrix2): DMatrix2 {
+    operator fun times(other: DMatrix2): DMatrix2 {
         val result = DMatrix2()
         CommonOps_DDF2.mult(rotMatrix, other, result)
         return result
@@ -48,7 +54,10 @@ class LieRotation2d(val rotMatrix: DMatrix2x2) {
     override fun equals(other: Any?) = (other is LieRotation2d) && log().equalsDelta(other.log())
 }
 
-data class LieTwist2d(val translation: DMatrix2, val angle: Double) {
+data class LieTwist2d(
+    val translation: DMatrix2 = DMatrix2(0.0, 0.0),
+    val angle: Double = 0.0
+) {
     constructor(x: Double, y: Double, heading: Double) : this(DMatrix2(x, y), heading)
 
     fun rightJ(): DMatrix3x3 {
@@ -84,11 +93,14 @@ data class LieTwist2d(val translation: DMatrix2, val angle: Double) {
     }
 
     override fun toString() = "LieTwist2d(x: ${translation.a1}, y: ${translation.a2}, angle: ${angle})"
-    override fun equals(other: Any?) = (other is LieTwist2d) && translation.a1.equalsDelta(other.translation.a1) &&
-            translation.a2.equalsDelta(other.translation.a2) && angle.equalsDelta(other.angle)
+    override fun equals(other: Any?) = (other is LieTwist2d) && translation.equalsDelta(other.translation) &&
+            angle.equalsDelta(other.angle)
 }
 
-data class LiePose2d(val position: DMatrix2, val rotation: LieRotation2d) {
+data class LiePose2d(
+    val position: DMatrix2 = DMatrix2(0.0, 0.0),
+    val rotation: LieRotation2d = LieRotation2d()
+) {
     constructor(position: DMatrix2, heading: Double) : this(position, LieRotation2d.exp(heading))
     constructor(x: Double, y: Double, heading: Double) : this(DMatrix2(x, y), heading)
 
@@ -106,9 +118,6 @@ data class LiePose2d(val position: DMatrix2, val rotation: LieRotation2d) {
             CommonOps_DDF2.mult(v, twist.translation, position)
             return LiePose2d(position, LieRotation2d.exp(twist.angle))
         }
-
-        @JvmStatic
-        fun identity() = LiePose2d(0.0, 0.0, 0.0)
     }
 
     fun log(): LieTwist2d {
@@ -155,7 +164,7 @@ data class LiePose2d(val position: DMatrix2, val rotation: LieRotation2d) {
 
     fun inverse(): LiePose2d {
         val inverseRotation = rotation.inverse()
-        val inverseTranslation = inverseRotation.compose(position)
+        val inverseTranslation = inverseRotation * position
         CommonOps_DDF2.changeSign(inverseTranslation)
         return LiePose2d(inverseTranslation, inverseRotation)
     }
@@ -192,7 +201,7 @@ data class LiePose2d(val position: DMatrix2, val rotation: LieRotation2d) {
 
     operator fun times(other: LiePose2d): LiePose2d {
         val newTranslation = times(other.position)
-        val newRotation = rotation.compose(other.rotation)
+        val newRotation = rotation * other.rotation
         return LiePose2d(newTranslation, newRotation)
     }
     fun timesJacobians(other: LiePose2d): PoseComposeResult {
@@ -203,8 +212,8 @@ data class LiePose2d(val position: DMatrix2, val rotation: LieRotation2d) {
     }
 
     override fun toString() = "LiePose2d(x: ${position.a1}, y: ${position.a2}, angle: ${rotation})"
-    override fun equals(other: Any?) = (other is LiePose2d) && position.a1.equalsDelta(other.position.a1) &&
-            position.a2.equalsDelta(other.position.a2) && rotation == other.rotation
+    override fun equals(other: Any?) = (other is LiePose2d) && position.equalsDelta(other.position) &&
+            rotation == other.rotation
 }
 
 data class InverseResult(val pose: LiePose2d, val jSelf: DMatrix3x3)
