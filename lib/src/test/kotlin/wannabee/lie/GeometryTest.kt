@@ -3,14 +3,25 @@
  */
 package wannabee.lie
 
-import kotlin.test.Test
-import kotlin.test.assertTrue
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.property.Arb
+import io.kotest.property.arbitrary.double
+import io.kotest.property.forAll
+import kotlin.math.PI
 
-class GeometryTest {
-    /*
-    @Test fun someLibraryMethodReturnsTrue() {
-        val classUnderTest = Library()
-        assertTrue(classUnderTest.someLibraryMethod(), "someLibraryMethod should return 'true'")
+class GeometryTest: StringSpec({
+    "pose composed with the identity should equal itself" {
+        forAll(Arb.double(-1000.0..1000.0), Arb.double(-1000.0..1000.0), Arb.double(-1000.0..1000.0)) { x, y, heading ->
+            val pose = LiePose2d(x, y, heading)
+            pose * LiePose2d.identity() == pose
+        }
     }
-     */
-}
+
+    "pose composed with its inverse should equal the identity pose" {
+        forAll(Arb.double(-1000.0..1000.0), Arb.double(-1000.0..1000.0), Arb.double(-1000.0..1000.0)) { x, y, heading ->
+            val pose = LiePose2d(x, y, heading)
+            val inverse = pose.inverse()
+            pose * inverse == LiePose2d.identity()
+        }
+    }
+})
