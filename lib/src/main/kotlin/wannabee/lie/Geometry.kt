@@ -151,10 +151,10 @@ data class LiePose2d(
     }
 
     operator fun plus(other: LieTwist2d): LiePose2d {
-        return times(LiePose2d.exp(other))
+        return times(exp(other))
     }
     fun plusJacobians(other: LieTwist2d): PlusResult {
-        val tau = LiePose2d.exp(other)
+        val tau = exp(other)
         return PlusResult(
             times(tau),
             tau.inverse().adjoint(),
