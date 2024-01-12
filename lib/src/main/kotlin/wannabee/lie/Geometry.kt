@@ -2,12 +2,10 @@ package wannabee.lie
 
 import org.ejml.data.DMatrix2
 import org.ejml.data.DMatrix2x2
-import org.ejml.data.DMatrix3
 import org.ejml.data.DMatrix3x3
 import org.ejml.data.DMatrixRMaj
 import org.ejml.dense.fixed.CommonOps_DDF2
 import org.ejml.dense.fixed.CommonOps_DDF3
-import org.ejml.dense.fixed.NormOps_DDF2
 import kotlin.math.*
 
 private fun skew(scalar: Double = 1.0) = DMatrix2x2(
@@ -15,7 +13,7 @@ private fun skew(scalar: Double = 1.0) = DMatrix2x2(
     scalar, 0.0
 )
 
-fun Double.equalsDelta(other: Double) = abs(this - other) < 0.00000001
+fun Double.equalsDelta(other: Double) = abs(this - other) < 0.00000001 || (this.isNaN() && other.isNaN()) || (this.isInfinite() && other.isInfinite())
 fun DMatrix2.equalsDelta(other: DMatrix2) = this.a1.equalsDelta(other.a1) && this.a2.equalsDelta(other.a2)
 
 class LieRotation2d(

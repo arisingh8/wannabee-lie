@@ -181,22 +181,18 @@ class GeometryTest: StringSpec({
         }
     }
 
-    /* need more numerically stable inverse for this, prob using LU decomp
-    "right and left Jacobians match the adjoint" {
+    "right and left Jacobians match each other" {
         forAll(twistArb) { twist ->
-            val rightJ = twist.rightJ()
-            val leftJ = twist.leftJ()
-
-            val rightJInv = DMatrix3x3()
-            val invert = CommonOps_DDF3.invert(rightJ, rightJInv)
-            if (!invert) return@forAll true
-            val jacobianProduct = DMatrix3x3()
-            CommonOps_DDF3.mult(leftJ, rightJInv, jacobianProduct)
-            LiePose2d.exp(twist).adjoint().print()
-            rightJInv.print()
-            LiePose2d.exp(twist).adjoint().equalsDelta(jacobianProduct)
+            LieTwist2d(-twist.translation.a1, -twist.translation.a2, -twist.angle).rightJ().equalsDelta(twist.leftJ())
         }
     }
 
-     */
+    "plus Jacobians match adjoint and right Jacobian" {
+        forAll(poseArb, twistArb) { pose, twist ->
+            val (_, selfJ, otherJ) = pose.plusJacobians(twist)
+            val invAdjoint = DMatrix3x3()
+            CommonOps_DDF3.invert(LiePose2d.exp(twist).adjoint(), invAdjoint)
+            selfJ.equalsDelta(invAdjoint) && otherJ.equalsDelta(twist.rightJ())
+        }
+    }
 })
