@@ -2,6 +2,7 @@ package wannabee.lie
 
 import org.ejml.data.DMatrix2
 import org.ejml.data.DMatrix2x2
+import org.ejml.data.DMatrix3
 import org.ejml.data.DMatrix3x3
 import org.ejml.data.DMatrixRMaj
 import org.ejml.dense.fixed.CommonOps_DDF2
@@ -14,7 +15,7 @@ private fun skew(scalar: Double = 1.0) = DMatrix2x2(
     scalar, 0.0
 )
 
-fun Double.equalsDelta(other: Double) = abs(this - other) < 0.0000000001
+fun Double.equalsDelta(other: Double) = abs(this - other) < 0.00000001
 fun DMatrix2.equalsDelta(other: DMatrix2) = this.a1.equalsDelta(other.a1) && this.a2.equalsDelta(other.a2)
 
 class LieRotation2d(
@@ -51,7 +52,8 @@ class LieRotation2d(
     }
 
     override fun toString() = "LieRotation2d(angle=${log()})"
-    override fun equals(other: Any?) = (other is LieRotation2d) && log().equalsDelta(other.log())
+
+    fun equalsDelta(other: LieRotation2d) = log().equalsDelta(other.log())
 }
 
 data class LieTwist2d(
@@ -69,8 +71,8 @@ data class LieTwist2d(
             )
         } else {
             DMatrix3x3(
-                sin(angle), (1 - cos(angle))/angle, (angle*translation.a1 - translation.a2 + translation.a2*cos(angle) - translation.a1*sin(angle))/angle.pow(2),
-                (cos(angle) - 1)/angle, sin(angle), (translation.a1 + angle*translation.a2 - translation.a1*cos(angle) - translation.a2*sin(angle))/angle.pow(2),
+                sin(angle)/angle, (1 - cos(angle))/angle, (angle*translation.a1 - translation.a2 + translation.a2*cos(angle) - translation.a1*sin(angle))/angle.pow(2),
+                (cos(angle) - 1)/angle, sin(angle)/angle, (translation.a1 + angle*translation.a2 - translation.a1*cos(angle) - translation.a2*sin(angle))/angle.pow(2),
                 0.0, 0.0, 1.0
             )
         }
@@ -85,16 +87,16 @@ data class LieTwist2d(
             )
         } else {
             DMatrix3x3(
-                sin(angle), (cos(angle) - 1)/angle, (angle*translation.a1 + translation.a2 - translation.a2*cos(angle) - translation.a1*sin(angle))/angle.pow(2),
-                (1 - cos(angle))/angle, sin(angle), (-translation.a1 + angle*translation.a2 + translation.a1*cos(angle) - translation.a2*sin(angle))/angle.pow(2),
+                sin(angle)/angle, (cos(angle) - 1)/angle, (angle*translation.a1 + translation.a2 - translation.a2*cos(angle) - translation.a1*sin(angle))/angle.pow(2),
+                (1 - cos(angle))/angle, sin(angle)/angle, (-translation.a1 + angle*translation.a2 + translation.a1*cos(angle) - translation.a2*sin(angle))/angle.pow(2),
                 0.0, 0.0, 1.0
             )
         }
     }
 
     override fun toString() = "LieTwist2d(x: ${translation.a1}, y: ${translation.a2}, angle: ${angle})"
-    override fun equals(other: Any?) = (other is LieTwist2d) && translation.equalsDelta(other.translation) &&
-            angle.equalsDelta(other.angle)
+
+    fun equalsDelta(other: LieTwist2d) = translation.equalsDelta(other.translation) && angle.equalsDelta(other.angle)
 }
 
 data class LiePose2d(
@@ -212,8 +214,8 @@ data class LiePose2d(
     }
 
     override fun toString() = "LiePose2d(x: ${position.a1}, y: ${position.a2}, angle: ${rotation})"
-    override fun equals(other: Any?) = (other is LiePose2d) && position.equalsDelta(other.position) &&
-            rotation == other.rotation
+
+    fun equalsDelta(other: LiePose2d) = position.equalsDelta(other.position) && rotation.equalsDelta(other.rotation)
 }
 
 data class InverseResult(val pose: LiePose2d, val jSelf: DMatrix3x3)
